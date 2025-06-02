@@ -6,37 +6,66 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/05/31 23:36:16 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/02 18:21:19 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	ft_lstadd_back_t_token(t_token *token, t_token *new)
+int	get_word_length(char *input, int *i)
 {
-	if (!token || !new)
-		return ;
-
-	if (!token->next)
-		
-	else if (head)
-		*lst = new;
+	int		len;
+	
+	len = 0;
+	while (input[*i + len] != ' ' && input[*i + len] != '\t' && input[*i + len] != '|' &&
+			input[*i + len] != '>' && input[*i + len] != '<' && input[*i + len])
+			len++;		
+	printf("Longueur du mot: %d\n", len);
+	return (len);
 }
 
-void	add_word_token(t_token **head, char c)
+void	add_token_back(t_token **head, t_token *new)
+{
+	t_token	*current;
+
+	if (!head || !new)
+		return ;
+	current = *head;
+	if (!*head)
+		*head = new;
+	else
+	{
+		while (current->next)
+		{
+			current = current->next;
+		}
+		current->next = new;
+		new->next = NULL;
+	}
+}
+
+void	add_word_token(t_token **head, char *input, int *i)
 {
 	t_token	*token;
-	char	*str;
-
-	token = malloc(sizeof(t_token));
-	token->type = TOKEN_WORD;
-	token->value = ft_substr(&c, 0, 1);
-	token->next = NULL;
-	printf("Ajouté TOKEN_WORD: %s\n", token->value);
-	ft_substr(&c, 0, 1);
-	if (!c)
+	token = (t_token *)malloc(sizeof(t_token));
+	if (!token)
 		return ;
-	ft_lstadd_back(head, token);
+	int len;
+	
+	len = get_word_length(input, i);
+	token->type = TOKEN_WORD;
+	token->value = ft_substr((input + *i), 0, len);
+	if (!token->value)
+	{
+		free(token);
+		return ;
+	}
+	*i += len;
+	token->next = NULL;
+	if (!*head)
+		*head = token;
+	else
+		add_token_back(head, token);
 }
 
 int handle_operator(char *input, int *i, int is_first_token, char c)
@@ -152,9 +181,11 @@ t_token *split_tokens(char *input)
 	int i;
 	int	j;
 	int	is_first_token;
+	t_token *head;
 	int	handle_return;
 	char	ops[4];
 	 
+	head = NULL;
 	ops[0] = '|';
 	ops[1] = '>';
 	ops[2] = '<';
@@ -184,10 +215,12 @@ t_token *split_tokens(char *input)
                 continue;
 		if (handle_return == -1)
                 break;
+
 		if (input[i] != ' ' && input[i] != '\t')
 		{
+			add_word_token(&head, input, &i);
+			printf("Ajouté mot à i=%d\n", i);
 			is_first_token = 0;
-			(ft_printf("Caractère à l’index %d : %c\n", i, input[i]), i++);
 		}
 	}
 	return (NULL);

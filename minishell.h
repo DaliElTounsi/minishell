@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:32:04 by mohchams          #+#    #+#             */
-/*   Updated: 2025/05/28 18:03:35 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/02 17:27:15 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,5 +46,7 @@ typedef struct	s_token
 t_token	*split_tokens(char *input);
 
 int		handle_operator(char *input, int *i, int is_first_token, char c);
+void	add_word_token(t_token **head, char *input, int *i);
+void	add_token_back(t_token **head, t_token *new);
 
 #endif
