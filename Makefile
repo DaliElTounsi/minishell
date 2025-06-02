@@ -5,7 +5,7 @@ SRCS = lexer.c main.c
 OBJS = $(SRCS:.c=.o)
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -g
 INCLUDES = -I. -I./libft
 LIBFT = libft/libft.a
 
