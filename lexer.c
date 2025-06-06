@@ -6,13 +6,17 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/02 18:21:19 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/06 16:52:38 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	get_word_length(char *input, int *i)
+int	operator(char c)
+{
+	return (c == '|' || c == '<' || c == '>');
+}
+int	get_token_length(char *input, int *i)
 {
 	int		len;
 	
@@ -20,7 +24,7 @@ int	get_word_length(char *input, int *i)
 	while (input[*i + len] != ' ' && input[*i + len] != '\t' && input[*i + len] != '|' &&
 			input[*i + len] != '>' && input[*i + len] != '<' && input[*i + len])
 			len++;		
-	printf("Longueur du mot: %d\n", len);
+	// printf("Longueur du mot: %d\n", len);
 	return (len);
 }
 
@@ -52,15 +56,53 @@ void	add_word_token(t_token **head, char *input, int *i)
 		return ;
 	int len;
 	
-	len = get_word_length(input, i);
+	len = get_token_length(input, i);
 	token->type = TOKEN_WORD;
 	token->value = ft_substr((input + *i), 0, len);
+	printf("la valeur du token : %s\n", token->value);
 	if (!token->value)
 	{
 		free(token);
 		return ;
 	}
 	*i += len;
+	token->next = NULL;
+	if (!*head)
+		*head = token;
+	else
+		add_token_back(head, token);
+}
+
+void add_operator_token(t_token **head, int handle_return, char *input, int *i)
+{
+	t_token	*token;
+	token = (t_token *)malloc(sizeof(t_token));
+	if (!token)
+		return ;
+	int len;
+	
+	len = 0;
+	if (handle_return >= 1 && handle_return <= 3)
+		len = 1;
+	else if (handle_return == 4 || handle_return == 5)
+		len = 2;
+	if (handle_return == 1)
+		token->type = TOKEN_PIPE;
+	else if (handle_return == 2)
+		token->type = TOKEN_REDIR_IN;
+	else if (handle_return == 3)
+		token->type = TOKEN_REDIR_OUT;
+	else if (handle_return == 4)
+		token->type = TOKEN_APPEND;
+	else if (handle_return == 5)
+		token->type = TOKEN_HEREDOC;
+	token->value = ft_substr((input + *i), 0, len);
+	// printf("%c\n", input[*i]);
+	if (!token->value)
+	{
+		free(token);
+		return ;
+	}
 	token->next = NULL;
 	if (!*head)
 		*head = token;
@@ -212,18 +254,22 @@ t_token *split_tokens(char *input)
 			}
 		}
 		if (handle_return > 0)
-                continue;
+		{
+			add_operator_token(&head, handle_return, input, &i);
+			printf("je suis passe par la\n");
+			continue ;
+		}
 		if (handle_return == -1)
                 break;
 
-		if (input[i] != ' ' && input[i] != '\t')
+		if (input[i] != ' ' && input[i] != '\t' && !operator(input[i]))
 		{
 			add_word_token(&head, input, &i);
-			printf("Ajouté mot à i=%d\n", i);
+			// printf("Ajouté mot à i=%d\n", i);
 			is_first_token = 0;
 		}
 	}
-	return (NULL);
+	return (head);
 }
 
 
