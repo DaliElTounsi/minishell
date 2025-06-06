@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/06 16:52:38 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/06 17:00:04 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void	add_word_token(t_token **head, char *input, int *i)
 	len = get_token_length(input, i);
 	token->type = TOKEN_WORD;
 	token->value = ft_substr((input + *i), 0, len);
-	printf("la valeur du token : %s\n", token->value);
+	printf("la valeur du token_word : %s\n", token->value);
 	if (!token->value)
 	{
 		free(token);
@@ -97,7 +97,9 @@ void add_operator_token(t_token **head, int handle_return, char *input, int *i)
 	else if (handle_return == 5)
 		token->type = TOKEN_HEREDOC;
 	token->value = ft_substr((input + *i), 0, len);
+	printf("la valeur du token_operator : %s\n", token->value);
 	// printf("%c\n", input[*i]);
+	
 	if (!token->value)
 	{
 		free(token);
