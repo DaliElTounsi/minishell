@@ -41,16 +41,3 @@ int	main(int ac, char **av)
 		free_token(l);
 	}
 }
-
-	// while (1)
-		// {
-		// 	input = readline("minishell> ");
-		// 	if (!input)
-		// 	{
-		// 		printf("exit\n");
-		// 		break;
-		// 	}
-		// 	add_history(input);
-		// 	printf("%s\n", input);
-		// 	free(input);
-		// }

@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/07 19:21:29 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/09 20:27:37 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,14 @@ int	operator(char c)
 {
 	return (c == '|' || c == '<' || c == '>');
 }
+
 int	get_token_length(char *input, int *i)
 {
-	int		len;
-	
+	int	len;
+
 	len = 0;
-	while (ft_isspace(input[*i + len]) && !"|><"[*i + len])
-		len++;	
-	// while (ft_isspace(input[*i + len]) && input[*i + len] != '|' &&
-	// 		input[*i + len] != '>' && input[*i + len] != '<' && input[*i + len])
-	// 		len++;		
-	// printf("Longueur du mot: %d\n", len);
+	while (!ft_isspace(input[*i + len]) && !ft_strchr("|><", input[*i + len]))
+		len++;
 	return (len);
 }
 
@@ -53,11 +50,11 @@ void	add_token_back(t_token **head, t_token *new)
 void	add_word_token(t_token **head, char *input, int *i)
 {
 	t_token	*token;
+	int		len;
+
 	token = (t_token *)malloc(sizeof(t_token));
 	if (!token)
 		return ;
-	int len;
-	
 	len = get_token_length(input, i);
 	token->type = TOKEN_WORD;
 	token->value = ft_substr((input + *i), 0, len);
@@ -75,14 +72,15 @@ void	add_word_token(t_token **head, char *input, int *i)
 		add_token_back(head, token);
 }
 
-void add_operator_token(t_token **head, int handle_return, char *input, int *i)
+void	add_operator_token(t_token **head, int handle_return,
+		char *input, int *i)
 {
 	t_token	*token;
+	int		len;
+
 	token = (t_token *)malloc(sizeof(t_token));
 	if (!token)
 		return ;
-	int len;
-	
 	len = 0;
 	if (handle_return >= 1 && handle_return <= 3)
 		len = 1;
@@ -99,11 +97,6 @@ void add_operator_token(t_token **head, int handle_return, char *input, int *i)
 	else if (handle_return == 5)
 		token->type = TOKEN_HEREDOC;
 	token->value = ft_substr((input + *i), 0, len);
-	printf("la valeur du token_operator : %d\n", token->type);
-	// printf("%c\n", input[*i]);
-
-	if (handle_return >= TOKEN_APPEND)
-		*i = *i + 1;
 	if (!token->value)
 	{
 		free(token);
@@ -116,127 +109,58 @@ void add_operator_token(t_token **head, int handle_return, char *input, int *i)
 		add_token_back(head, token);
 }
 
-int handle_operator(char *input, int *i, int is_first_token, char c)
+int	handle_operator(char *input, int *i)
 {
-
-	if (input[*i] == c && is_first_token)
+	if (operator(input[*i]))
 	{
-		(ft_printf("syntax error near unexpected token %c\n", c), i++);
-		return (-1);
-	}
-	else if (input[*i] == c && (!input[*i + 1] || input[*i + 1] == ' '))
-	{
-		if (c == '|')
+		if (input[*i] == '|')
 		{
-			while (input[*i + 1] == ' ')
-				(*i)++;
-			if (!input[*i + 1])
-			{
-				(ft_printf("Erreur : pipe à la fin\n"), (*i)++);
-				return(-1);
-			}
+			if (operator(input[*i + 1])) 
+				return (-1);
 			else
 			{
 				ft_printf("Opérateur PIPE trouvé\n"); 
 				(*i)++;
+				return (TOKEN_PIPE);
 			}
-			return (TOKEN_PIPE);	
 		}
-		if (c == '>' || c == '<')
-		{	
-			while (input[*i + 1] == ' ')
-				(*i)++;
-			if (!input[*i + 1])
-			{
-				(ft_printf("Erreur : redirection à la fin\n"), (*i)++);
-				return(-1);
-			}
-			if (c == '<')
+		if (input[*i] == '<')
+		{
+			if (!operator(input[*i + 1]))
 			{
 				ft_printf(("Opérateur REDIR_IN trouvé\n"), (*i)++); 
 				return (TOKEN_REDIR_IN);
 			}
-			if (c == '>')
+			else if (input[*i + 1] == '<' && operator(input[*i + 2]))
+				return (-1);
+			else if (input[*i + 1] == '<' && !operator(input[*i + 2]))
+			{
+				(ft_printf("Opérateur  HEREDOC trouvé\n"), (*i)++, (*i)++);
+				return (TOKEN_HEREDOC);
+			}
+		}
+		if (input[*i] == '>')
+		{
+			if (!operator(input[*i + 1]))
 			{
 				ft_printf("Opérateur REDIR_OUT trouvé\n"), (*i)++;
 				return (TOKEN_REDIR_OUT);
 			}
-			return (-1);
-		}
-	}
-	else if (input[*i] == c && input[*i + 1] == c)
-	{
-		if (c == '|')
-		{
-			(ft_printf("Erreur : opérateur PIPE double\n"), (*i)++, (*i)++);
-			return (-1);
-		}
-		else if ((c == '>' || c == '<') && (input[*i + 2] == '>' || input[*i + 2] == '<'))
-		{
-			(ft_printf("syntax error near unexpected token '>'\n"), (*i)++, (*i)++);
-			return (-1);
-		}
-		else if (c == '>')
-		{
-			while (input[*i + 1] == ' ')
-				(*i)++;
-			if (!input[*i + 1])
+			else if (input[*i + 1] == '>' && operator(input[*i + 2]))
+				return (-1);
+			else if (input[*i + 1] == '>' && !operator(input[*i + 2]))
 			{
-				(ft_printf("syntax error near unexpected token '>>'\n"), (*i)++);
-				return(-1);
+				(ft_printf("Opérateur  APPEND trouvé\n"), (*i)++, (*i)++);
+				return (TOKEN_APPEND);
 			}
-			else
-				(ft_printf("Opérateur APPEND trouvé\n"), (*i)++, (*i)++);
-			return (TOKEN_APPEND);
 		}
-		else if (c == '<')
-		{
-			while (input[*i + 1] == ' ')
-				(*i)++;
-			(ft_printf("Opérateur  HEREDOC trouvé\n"), (*i)++, (*i)++);
-			return (TOKEN_HEREDOC);
-		}
-		else
-			return (-1);
 	}
-	// else if (input[*i] == c && input[*i + 1] != c)
-	// {
-	// 	while (input[*i + 1] == ' ')
-	// 		(*i)++;
-	// 	if (!input[*i + 1])
-	// 	{
-	// 		(ft_printf("Erreur : pipe à la fin\n"), (*i)++);
-	// 		return(-1);
-	// 	}
-	// 	if (c == '>')
-	// 	{
-    // 		(ft_printf("Opérateur REDIR_OUT trouvé\n"), (*i)++);
-	// 		return (TOKEN_REDIR_OUT);
-	// 	}
-	// 	else if (c == '<')
-	// 	{
-	// 		(ft_printf("Opérateur REDIR_IN trouvé\n"), (*i)++);
-	// 		return (TOKEN_REDIR_IN);
-	// 	}
-	// 	else if (c == '|')
-	// 	{
-	// 		ft_printf("Opérateur PIPE trouvé\n"); 
-	// 		(*i)++;
-			
-	// 		return (TOKEN_PIPE);
-	// 	}
-	// 	else
-	// 		return (-1);
-	// 	i++;
-	// }
 	return (0);
 }
 
-t_token *split_tokens(char *input)
+t_token	*split_tokens(char *input)
 {
 	int i;
-	int	j;
-	int	is_first_token;
 	t_token *head;
 	int	handle_return;
 	 
@@ -245,37 +169,25 @@ t_token *split_tokens(char *input)
 	if (!input)
 		return (NULL);
 	i = 0;
-	is_first_token = 1;
 	while (input[i])
 	{
 		if (ft_isspace(input[i]))
 			i++;
-		else
-		{
-			j = 0;
-			handle_return = 0;
-			while (j < 3)
-			{
-				handle_return = handle_operator(input, &i, is_first_token, "|><"[j]);	
-				if (handle_return > 0 || handle_return == -1)
-					break ;
-				j++;
-			}
-		}
+		handle_return = handle_operator(input, &i);		
+		if (handle_return == -1)
+			break ;
 		if (handle_return > 0)
 		{
 			add_operator_token(&head, handle_return, input, &i);
-			printf("je suis passe par la\n");
 			continue ;
 		}
-		if (handle_return == -1)
-                break;
-
-		if (!ft_isspace(input[i]) && !operator(input[i]))
+		if (handle_return == 0)
 		{
 			add_word_token(&head, input, &i);
-			is_first_token = 0;
+			i++;
 		}
+		else
+			i++;
 	}
 	return (head);
 }
