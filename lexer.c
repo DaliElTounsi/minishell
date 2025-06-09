@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/06 17:00:04 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/07 19:21:29 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,11 @@ int	get_token_length(char *input, int *i)
 	int		len;
 	
 	len = 0;
-	while (input[*i + len] != ' ' && input[*i + len] != '\t' && input[*i + len] != '|' &&
-			input[*i + len] != '>' && input[*i + len] != '<' && input[*i + len])
-			len++;		
+	while (ft_isspace(input[*i + len]) && !"|><"[*i + len])
+		len++;	
+	// while (ft_isspace(input[*i + len]) && input[*i + len] != '|' &&
+	// 		input[*i + len] != '>' && input[*i + len] != '<' && input[*i + len])
+	// 		len++;		
 	// printf("Longueur du mot: %d\n", len);
 	return (len);
 }
@@ -97,9 +99,11 @@ void add_operator_token(t_token **head, int handle_return, char *input, int *i)
 	else if (handle_return == 5)
 		token->type = TOKEN_HEREDOC;
 	token->value = ft_substr((input + *i), 0, len);
-	printf("la valeur du token_operator : %s\n", token->value);
+	printf("la valeur du token_operator : %d\n", token->type);
 	// printf("%c\n", input[*i]);
-	
+
+	if (handle_return >= TOKEN_APPEND)
+		*i = *i + 1;
 	if (!token->value)
 	{
 		free(token);
@@ -136,9 +140,9 @@ int handle_operator(char *input, int *i, int is_first_token, char c)
 				ft_printf("Opérateur PIPE trouvé\n"); 
 				(*i)++;
 			}
-			return (1);	
+			return (TOKEN_PIPE);	
 		}
-		else if (c == '>' || c == '<')
+		if (c == '>' || c == '<')
 		{	
 			while (input[*i + 1] == ' ')
 				(*i)++;
@@ -147,11 +151,17 @@ int handle_operator(char *input, int *i, int is_first_token, char c)
 				(ft_printf("Erreur : redirection à la fin\n"), (*i)++);
 				return(-1);
 			}
-			else if (c == '<')
+			if (c == '<')
+			{
 				ft_printf(("Opérateur REDIR_IN trouvé\n"), (*i)++); 
-			else if (c == '>')
+				return (TOKEN_REDIR_IN);
+			}
+			if (c == '>')
+			{
 				ft_printf("Opérateur REDIR_OUT trouvé\n"), (*i)++;
-			return (1);
+				return (TOKEN_REDIR_OUT);
+			}
+			return (-1);
 		}
 	}
 	else if (input[*i] == c && input[*i + 1] == c)
@@ -177,46 +187,48 @@ int handle_operator(char *input, int *i, int is_first_token, char c)
 			}
 			else
 				(ft_printf("Opérateur APPEND trouvé\n"), (*i)++, (*i)++);
-			return (4);
+			return (TOKEN_APPEND);
 		}
 		else if (c == '<')
 		{
+			while (input[*i + 1] == ' ')
+				(*i)++;
 			(ft_printf("Opérateur  HEREDOC trouvé\n"), (*i)++, (*i)++);
-			return (5);
+			return (TOKEN_HEREDOC);
 		}
 		else
 			return (-1);
 	}
-	else if (input[*i] == c && input[*i + 1] != c)
-	{
-		while (input[*i + 1] == ' ')
-			(*i)++;
-		if (!input[*i + 1])
-		{
-			(ft_printf("Erreur : pipe à la fin\n"), (*i)++);
-			return(-1);
-		}
-		if (c == '>')
-		{
-    		(ft_printf("Opérateur REDIR_OUT trouvé\n"), (*i)++);
-			return (3);
-		}
-		else if (c == '<')
-		{
-			(ft_printf("Opérateur REDIR_IN trouvé\n"), (*i)++);
-			return (2);
-		}
-		else if (c == '|')
-		{
-			ft_printf("Opérateur PIPE trouvé\n"); 
-			(*i)++;
+	// else if (input[*i] == c && input[*i + 1] != c)
+	// {
+	// 	while (input[*i + 1] == ' ')
+	// 		(*i)++;
+	// 	if (!input[*i + 1])
+	// 	{
+	// 		(ft_printf("Erreur : pipe à la fin\n"), (*i)++);
+	// 		return(-1);
+	// 	}
+	// 	if (c == '>')
+	// 	{
+    // 		(ft_printf("Opérateur REDIR_OUT trouvé\n"), (*i)++);
+	// 		return (TOKEN_REDIR_OUT);
+	// 	}
+	// 	else if (c == '<')
+	// 	{
+	// 		(ft_printf("Opérateur REDIR_IN trouvé\n"), (*i)++);
+	// 		return (TOKEN_REDIR_IN);
+	// 	}
+	// 	else if (c == '|')
+	// 	{
+	// 		ft_printf("Opérateur PIPE trouvé\n"); 
+	// 		(*i)++;
 			
-			return (1);
-		}
-		else
-			return (-1);
-		i++;
-	}
+	// 		return (TOKEN_PIPE);
+	// 	}
+	// 	else
+	// 		return (-1);
+	// 	i++;
+	// }
 	return (0);
 }
 
@@ -227,13 +239,8 @@ t_token *split_tokens(char *input)
 	int	is_first_token;
 	t_token *head;
 	int	handle_return;
-	char	ops[4];
 	 
 	head = NULL;
-	ops[0] = '|';
-	ops[1] = '>';
-	ops[2] = '<';
-	ops[3] = '\0';
 	
 	if (!input)
 		return (NULL);
@@ -241,7 +248,7 @@ t_token *split_tokens(char *input)
 	is_first_token = 1;
 	while (input[i])
 	{
-		if (input[i] == ' ' || input[i] == '\t')
+		if (ft_isspace(input[i]))
 			i++;
 		else
 		{
@@ -249,7 +256,7 @@ t_token *split_tokens(char *input)
 			handle_return = 0;
 			while (j < 3)
 			{
-				handle_return = handle_operator(input, &i, is_first_token, ops[j]);	
+				handle_return = handle_operator(input, &i, is_first_token, "|><"[j]);	
 				if (handle_return > 0 || handle_return == -1)
 					break ;
 				j++;
@@ -264,10 +271,9 @@ t_token *split_tokens(char *input)
 		if (handle_return == -1)
                 break;
 
-		if (input[i] != ' ' && input[i] != '\t' && !operator(input[i]))
+		if (!ft_isspace(input[i]) && !operator(input[i]))
 		{
 			add_word_token(&head, input, &i);
-			// printf("Ajouté mot à i=%d\n", i);
 			is_first_token = 0;
 		}
 	}
