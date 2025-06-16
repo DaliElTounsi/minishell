@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:32:04 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/09 18:54:35 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/16 15:10:47 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,5 +49,6 @@ void	add_word_token(t_token **head, char *input, int *i);
 void	add_token_back(t_token **head, t_token *new);
 void	add_operator_token(t_token **head, int handle_return, char *input, int *i);
 int		get_token_length(char *input, int *i);
+int		if_quotes(char *input, int *i);
 
 #endif

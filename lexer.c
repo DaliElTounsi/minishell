@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/09 20:27:37 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:20:57 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,13 +16,38 @@ int	operator(char c)
 {
 	return (c == '|' || c == '<' || c == '>');
 }
+int if_quotes(char *input, int *i)
+{
+	int count_sep;
+	int	len;
+	
+	len = 0;
+	count_sep = 0;
+	while (input[*i + len])
+	{
+		if (input[*i + len] == '\'')
+		{
+			printf("je suis rentre\n");
+			count_sep++;
+		}
+		len++;
+	}	
+	if (count_sep > 0 && (count_sep % 2) == 0)
+	{
+		printf("en rentre dans les quotes %d\n", count_sep);
+		return(len);
+	}
+	else
+		printf("erreur quotes impaire\n");
+	return (-1);
+}
 
 int	get_token_length(char *input, int *i)
 {
 	int	len;
-
+	
 	len = 0;
-	while (!ft_isspace(input[*i + len]) && !ft_strchr("|><", input[*i + len]))
+	while (!ft_isspace(input[*i + len]) && !ft_strchr("|><", input[*i + len]))	
 		len++;
 	return (len);
 }
@@ -86,17 +111,11 @@ void	add_operator_token(t_token **head, int handle_return,
 		len = 1;
 	else if (handle_return == 4 || handle_return == 5)
 		len = 2;
-	if (handle_return == 1)
-		token->type = TOKEN_PIPE;
-	else if (handle_return == 2)
-		token->type = TOKEN_REDIR_IN;
-	else if (handle_return == 3)
-		token->type = TOKEN_REDIR_OUT;
-	else if (handle_return == 4)
-		token->type = TOKEN_APPEND;
-	else if (handle_return == 5)
-		token->type = TOKEN_HEREDOC;
+	token->type = handle_return;
+	// printf("Index *i=%d, caractère='%c'\n", *i, input[*i]);
+	// printf("Index *i=%d, caractère='%c'\n", *i + 1, input[*i + 1]);
 	token->value = ft_substr((input + *i), 0, len);
+	printf("la valeur du token %s\n", token->value);
 	if (!token->value)
 	{
 		free(token);
@@ -163,22 +182,25 @@ t_token	*split_tokens(char *input)
 	int i;
 	t_token *head;
 	int	handle_return;
+	int start_i;
 	 
 	head = NULL;
 	
 	if (!input)
 		return (NULL);
 	i = 0;
+	if_quotes(input, &i);
 	while (input[i])
 	{
 		if (ft_isspace(input[i]))
 			i++;
+		start_i = i;
 		handle_return = handle_operator(input, &i);		
 		if (handle_return == -1)
 			break ;
 		if (handle_return > 0)
 		{
-			add_operator_token(&head, handle_return, input, &i);
+			add_operator_token(&head, handle_return, input, &start_i);
 			continue ;
 		}
 		if (handle_return == 0)
