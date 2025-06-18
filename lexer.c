@@ -6,7 +6,7 @@
 /*   By: mohchams <mohchams@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 19:48:45 by mohchams          #+#    #+#             */
-/*   Updated: 2025/06/16 16:20:57 by mohchams         ###   ########.fr       */
+/*   Updated: 2025/06/18 15:36:06 by mohchams         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,116 +16,16 @@ int	operator(char c)
 {
 	return (c == '|' || c == '<' || c == '>');
 }
-int if_quotes(char *input, int *i)
-{
-	int count_sep;
-	int	len;
-	
-	len = 0;
-	count_sep = 0;
-	while (input[*i + len])
-	{
-		if (input[*i + len] == '\'')
-		{
-			printf("je suis rentre\n");
-			count_sep++;
-		}
-		len++;
-	}	
-	if (count_sep > 0 && (count_sep % 2) == 0)
-	{
-		printf("en rentre dans les quotes %d\n", count_sep);
-		return(len);
-	}
-	else
-		printf("erreur quotes impaire\n");
-	return (-1);
-}
 
 int	get_token_length(char *input, int *i)
 {
 	int	len;
-	
+
 	len = 0;
-	while (!ft_isspace(input[*i + len]) && !ft_strchr("|><", input[*i + len]))	
+
+	while (!ft_isspace(input[*i + len]) && !ft_strchr("|><\'\"", input[*i + len]))
 		len++;
 	return (len);
-}
-
-void	add_token_back(t_token **head, t_token *new)
-{
-	t_token	*current;
-
-	if (!head || !new)
-		return ;
-	current = *head;
-	if (!*head)
-		*head = new;
-	else
-	{
-		while (current->next)
-		{
-			current = current->next;
-		}
-		current->next = new;
-		new->next = NULL;
-	}
-}
-
-void	add_word_token(t_token **head, char *input, int *i)
-{
-	t_token	*token;
-	int		len;
-
-	token = (t_token *)malloc(sizeof(t_token));
-	if (!token)
-		return ;
-	len = get_token_length(input, i);
-	token->type = TOKEN_WORD;
-	token->value = ft_substr((input + *i), 0, len);
-	printf("la valeur du token_word : %s\n", token->value);
-	if (!token->value)
-	{
-		free(token);
-		return ;
-	}
-	*i += len;
-	token->next = NULL;
-	if (!*head)
-		*head = token;
-	else
-		add_token_back(head, token);
-}
-
-void	add_operator_token(t_token **head, int handle_return,
-		char *input, int *i)
-{
-	t_token	*token;
-	int		len;
-
-	token = (t_token *)malloc(sizeof(t_token));
-	if (!token)
-		return ;
-	len = 0;
-	if (handle_return >= 1 && handle_return <= 3)
-		len = 1;
-	else if (handle_return == 4 || handle_return == 5)
-		len = 2;
-	token->type = handle_return;
-	// printf("Index *i=%d, caractère='%c'\n", *i, input[*i]);
-	// printf("Index *i=%d, caractère='%c'\n", *i + 1, input[*i + 1]);
-	token->value = ft_substr((input + *i), 0, len);
-	printf("la valeur du token %s\n", token->value);
-	if (!token->value)
-	{
-		free(token);
-		return ;
-	}
-	token->next = NULL;
-	if (!*head)
-		*head = token;
-	else
-		add_token_back(head, token);
 }
 
 int	handle_operator(char *input, int *i)
@@ -183,13 +83,16 @@ t_token	*split_tokens(char *input)
 	t_token *head;
 	int	handle_return;
 	int start_i;
+	int serch_quotes;
 	 
 	head = NULL;
+	serch_quotes = 0;
 	
 	if (!input)
 		return (NULL);
 	i = 0;
-	if_quotes(input, &i);
+	if (serch_quotes < 0)
+		return (NULL);
 	while (input[i])
 	{
 		if (ft_isspace(input[i]))
